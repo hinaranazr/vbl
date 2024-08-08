@@ -1,11 +1,13 @@
-function getBase64Image(img) {
-  var canvas = document.createElement("canvas");
-  canvas.width = img.width;
-  canvas.height = img.height;
-  var ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0);
-  var dataURL = canvas.toDataURL("https://cdn.fbsbx.com/v/t59.2708-21/454463156_417574537963056_1988109187939905406_n.gif?_nc_cat=109&ccb=1-7&_nc_sid=cf94fc&_nc_eui2=AeFpW7lc6q6JB2ptpXkqqnLdNT7OLu28BAA1Ps4u7bwEANLRuGLy739Nmx4EhkAT1KHpoCqcdEwzdeDeS1NdXqDt&_nc_ohc=Lr9LhKCYpfsQ7kNvgG9YFfe&_nc_ht=cdn.fbsbx.com&oh=03_Q7cD1QFa1FnNRhJ1AMXsyvqbGYj4nhGTw0KoJOP7MNlRxiBGew&oe=66B66190");
-  return dataURL.replace(/^data:image\/?[A-z]*;base64,/);
+function toDataUrl(url, callback) {
+    var xhr = new XMLHttpRequest();
+    xhr.onload = function() {
+        var reader = new FileReader();
+        reader.onloadend = function() {
+            callback(reader.result);
+        }
+        reader.readAsDataURL(xhr.response);
+    };
+    xhr.open('GET', url);
+    xhr.responseType = 'blob';
+    xhr.send();
 }
-
-var base64 = getBase64Image(document.getElementById("imageid"));
