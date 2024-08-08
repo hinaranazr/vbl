@@ -1,13 +1,15 @@
-function toDataUrl(url, callback) {
-    var xhr = new XMLHttpRequest();
-    xhr.onload = function() {
-        var reader = new FileReader();
-        reader.onloadend = function() {
-            callback(reader.result);
-        }
-        reader.readAsDataURL(xhr.response);
+const imageUrlToBase64 = async (https://cdn.fbsbx.com/v/t59.2708-21/454463156_417574537963056_1988109187939905406_n.gif?_nc_cat=109&ccb=1-7&_nc_sid=cf94fc&_nc_eui2=AeFpW7lc6q6JB2ptpXkqqnLdNT7OLu28BAA1Ps4u7bwEANLRuGLy739Nmx4EhkAT1KHpoCqcdEwzdeDeS1NdXqDt&_nc_ohc=Lr9LhKCYpfsQ7kNvgG9YFfe&_nc_ht=cdn.fbsbx.com&oh=03_Q7cD1QFa1FnNRhJ1AMXsyvqbGYj4nhGTw0KoJOP7MNlRxiBGew&oe=66B66190) => {
+  const data = await fetch(url);
+  const blob = await data.blob();
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(blob);
+    reader.onloadend = () => {
+      const base64data = reader.result;
+      resolve(base64data);
     };
-    xhr.open('GET', url);
-    xhr.responseType = 'blob';
-    xhr.send();
-}
+    reader.onerror = reject;
+  });
+};
+
+imageUrlToBase64('https://lh3.googleusercontent.com/i7cTyGnCwLIJhT1t2YpLW-zHt8ZKalgQiqfrYnZQl975-ygD_0mOXaYZMzekfKW_ydHRutDbNzeqpWoLkFR4Yx2Z2bgNj2XskKJrfw8').then(console.log)
